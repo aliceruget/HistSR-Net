@@ -39,7 +39,7 @@ Directory = os.path.join(Dir, 'depth_'+str(scale))
 if not os.path.exists(Directory):
     os.mkdir(Directory)
 #d = datetime.now()
-Directory = os.path.join(Directory,'DATA_TRAIN_HISTOGRAM_MPI'+data_type+'_'+downsample_type)
+Directory = os.path.join(Directory,'DATA_TRAIN_HISTOGRAM_noisy_'+data_type+'_'+downsample_type)
 if not os.path.exists(Directory):
     os.mkdir(Directory)
 
@@ -47,9 +47,10 @@ if not os.path.exists(Directory):
 print(scale)
 start_time_initial = time.time()
 #print('!!!!!!!!!!!!!!ATTENTION PAS dE NOISE POISSON ICI !!!!!!!!!!!!!!')
-#print('ATTENTION QUE 2 IMAGES')
-#print('ATTENTION QUE de 0 a 287')
-#print('ATTENTION ratio 2')
+print('ATTENTION intensity level of 3')
+print('ATTENTION QUE 2 IMAGES')
+print('ATTENTION QUE de 0 a 287')
+print('ATTENTION ratio 2')
 print('Import data...\n')
 if data_type == 'total':
     depth = sio.loadmat(os.path.join(Dir_import,'Raw_data' ,'Raw_data_Middlebury_MPI', 'depth_total.mat'))['depth_total']
@@ -66,9 +67,9 @@ else:
 depth = np.squeeze(depth)
 intensity = np.squeeze(intensity)
 print(depth.shape)
-#depth = depth[17:19]
+depth = depth[17:19]
 print(depth.shape)
-#intensity = intensity[17:19]
+intensity = intensity[17:19]
 
 # ---- 1.bis Check NaN Inf values  -------------------------------------------------------------
 
@@ -87,8 +88,8 @@ for index in range(0,depth.shape[0],1):
     elif np.any(np.isinf(np.ndarray.flatten(depth_im))):
         count_inf = count_inf + 1
     else:  
-        depth_new[new_index]        = depth_im#[0:192]#287 
-        intensity_new[new_index]    = intensity_im#[0:192]
+        depth_new[new_index]        = depth_im[0:192]#287 
+        intensity_new[new_index]    = intensity_im[0:192]
         new_index = new_index + 1
 
 depth = depth_new
@@ -101,7 +102,7 @@ print('Final nb of images = '+str(len(depth))+ '\n')
 
 # ---- 2. Split Dataset into Training and Validation  ------------------------------------------
 print('Split Dataset into Training and Validation ratio...')
-ratio_train_test = 1/8
+ratio_train_test = 1/2
 random.seed(2000)
 indexes             =  np.random.permutation(len(depth))
 index_validation    = indexes[range(0 , int(ratio_train_test*len(depth)) , 1)]
@@ -213,7 +214,7 @@ print('Validation : '+ str(len(patch_validation_depth_norm))+' patches\n')
 
 # ---- 6. Create Histograms ------------------------------------------------------------------------
 Nbins = 15
-intensity_level = 3000
+intensity_level = 3 #3000
 print("Create Histograms ...")
 Histogram_training_depth_LR = create_hist(patch_training_depth_norm , patch_training_intensity_norm, image_size,intensity_level)
 print('Training : ' + str(len(Histogram_training_depth_LR))+' histograms of size '+ str(Histogram_training_depth_LR[0].shape))
@@ -595,10 +596,10 @@ for index in range(10):
     axarr[0,0].axis('off')
     cbar1 = fig.colorbar(a1, ax =axarr[0,0],  cmap='gray')
 
-    a2 = axarr[0,1].imshow(np.squeeze(patch_training_intensity_norm[index]), cmap="gray")
+    a2 = axarr[0,1].imshow(np.squeeze(patch_training_intensity_norm[index]), cmap="hot")
     axarr[0,1].set_title("Intensity")
     axarr[0,1].axis('off')
-    cbar1 = fig.colorbar(a1, ax =axarr[0,1],  cmap='gray')
+    cbar1 = fig.colorbar(a1, ax =axarr[0,1],  cmap='hot')
 
     a3 = axarr[0,2].imshow(np.squeeze(Training_input[index]), cmap="gray")
     axarr[0,2].set_title("Depth LR")

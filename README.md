@@ -13,6 +13,9 @@ python3 create_train.py
 
 --Dir_import='/home/ar432/DepthSR_Net/Dataset'
 
+
+python3 create_train.py --config='/Users/aliceruget/Documents/PhD/DepthSR_Net_AR.bak/Configs/cfg_original_scale4.yaml' --out_dir='/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset' --downsample_type='nearest' --data_type='MPI' --Dir_import='/Users/aliceruget/Documents/PhD/Dataset/RAW'
+
 ## Simulated Validation dataset (Middlebury image)
 
 create_test_synthetic.py

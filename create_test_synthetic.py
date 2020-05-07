@@ -53,12 +53,13 @@ patch_depth_LR_norm = {}
 patch_depth_LR_norm[0] = I_up
 patch_intensity_norm = {}
 patch_intensity_norm[0] = intensity_image
-patch_histogram = create_hist(patch_depth_LR_norm, patch_intensity_norm, 1)
+intensity_level = 3000
+patch_histogram = create_hist(patch_depth_LR_norm, patch_intensity_norm, 1, intensity_level)
 print(patch_histogram[0].shape)
 
 ### --- Create Noisy Histograms 
 print('Create Noisy Histograms  ...')
-SBR_mean = 0.41 #0.9
+SBR_mean = 0.000001#0.41 #0.9
 no_ambient = 0 
 patch_histogram = create_noise(patch_histogram, SBR_mean, no_ambient)
 histogram = patch_histogram[0]
@@ -160,7 +161,7 @@ print(list_pool_4.shape)
 ### --- Save 
 print('Save ...')
 Dir = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/create_testing/Synthetic_data'
-save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art')
+save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_intensity_level='+str(intensity_level)+'_SBR='+str(SBR_mean))
 print(save_path)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
@@ -172,3 +173,45 @@ sio.savemat(os.path.join(save_path,  "0_pool2.mat" ),{'list_pool_2':np.squeeze(l
 sio.savemat(os.path.join(save_path,  "0_pool3.mat" ),{'list_pool_3':np.squeeze(list_pool_3)})
 sio.savemat(os.path.join(save_path,  "0_pool4.mat" ),{'list_pool_4':np.squeeze(list_pool_4)})
 imageio.imwrite(os.path.join(save_path,  "0_RGB.bmp" ), intensity_image)
+
+fig, axarr = plt.subplots(2,4)
+a1 = axarr[0,0].imshow(np.squeeze(I_up), cmap="gray")
+axarr[0,0].set_title("Depth HR")
+axarr[0,0].axis('off')
+cbar1 = fig.colorbar(a1, ax =axarr[0,0],  cmap='gray')
+
+a2 = axarr[0,1].imshow(np.squeeze(intensity_image), cmap="hot")
+axarr[0,1].set_title("Intensity")
+axarr[0,1].axis('off')
+cbar1 = fig.colorbar(a1, ax =axarr[0,1],  cmap='hot')
+
+a3 = axarr[0,2].imshow(np.squeeze(depth_up), cmap="gray")
+axarr[0,2].set_title("Depth LR")
+axarr[0,2].axis('off')
+cbar1 = fig.colorbar(a3, ax =axarr[0,2],  cmap='gray')
+
+axarr[0,3].axis('off')
+
+a10 = axarr[1,0].imshow(np.squeeze(list_pool_1), cmap="gray")
+axarr[1,0].set_title("Feature 1")
+axarr[1,0].axis('off')
+cbar10 = fig.colorbar(a10, ax =axarr[1,0], cmap='gray')
+
+a11 = axarr[1,1].imshow(np.squeeze(list_pool_2), cmap="gray")
+axarr[1,1].set_title("Feature 2")
+axarr[1,1].axis('off')
+cbar11 = fig.colorbar(a11, ax =axarr[1,1], cmap='gray')
+
+a12 = axarr[1,2].imshow(np.squeeze(list_pool_3), cmap="gray")
+axarr[1,2].set_title("Feature 3")
+axarr[1,2].axis('off')
+cbar12 = fig.colorbar(a12, ax =axarr[1,2], cmap='gray')
+
+a13 = axarr[1,3].imshow(np.squeeze(list_pool_4), cmap="gray")
+axarr[1,3].set_title("Feature 4")
+axarr[1,3].axis('off')
+cbar13 = fig.colorbar(a13, ax =axarr[1,3],cmap='gray')
+plt.savefig(os.path.join(save_path, 'inputs.png'))
+#plt.show()
+plt.clf()
+plt.cla()
