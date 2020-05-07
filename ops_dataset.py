@@ -78,7 +78,7 @@ def center_of_mass(Histogram_training_depth_LR, type):
             Depth_images[index, :,:] = depth_image
     return Depth_images
 
-def create_hist(patch_depth_LR_norm , patch_intensity_norm,image_size):
+def create_hist(patch_depth_LR_norm , patch_intensity_norm,image_size, intensity_level):
     nb_patches = len(patch_depth_LR_norm)
     precision = 100 #precision per bin 
     sigma = 0.5714 #standard deviation exp
@@ -109,7 +109,7 @@ def create_hist(patch_depth_LR_norm , patch_intensity_norm,image_size):
                     #index_array = precision * (16 - (Nbins*depth - np.int(Nbins*depth))) + precision*(index_bin - np.int(Nbins*depth))
                     bins[i,j,index_bin] = array_bin[np.int(index_array_bin)]
 
-                bins[i,j,:] = bins[i,j,:] * intensity_image[i,j]*3000
+                bins[i,j,:] = bins[i,j,:] * intensity_image[i,j]*intensity_level
 
         hist_patch_depth[index_patch] = bins
 

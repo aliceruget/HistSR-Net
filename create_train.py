@@ -213,12 +213,13 @@ print('Validation : '+ str(len(patch_validation_depth_norm))+' patches\n')
 
 # ---- 6. Create Histograms ------------------------------------------------------------------------
 Nbins = 15
+intensity_level = 3000
 print("Create Histograms ...")
-Histogram_training_depth_LR = create_hist(patch_training_depth_norm , patch_training_intensity_norm, image_size)
+Histogram_training_depth_LR = create_hist(patch_training_depth_norm , patch_training_intensity_norm, image_size,intensity_level)
 print('Training : ' + str(len(Histogram_training_depth_LR))+' histograms of size '+ str(Histogram_training_depth_LR[0].shape))
 
 
-Histogram_validation_depth_LR = create_hist(patch_validation_depth_norm , patch_validation_intensity_norm, image_size)
+Histogram_validation_depth_LR = create_hist(patch_validation_depth_norm , patch_validation_intensity_norm, image_size,intensity_level)
 print('Validation : '+ str(len(Histogram_validation_depth_LR))+' histograms of size '+ str(Histogram_training_depth_LR[0].shape)+'\n')
 
 # ---- 7. Add Noise ------------------------------------------------------------------------
