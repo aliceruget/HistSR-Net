@@ -1,5 +1,5 @@
 # Dataset 
-- Training dataset : create_train.py
+## Training dataset : create_train.py
 
 python3 create_train.py 
 
@@ -13,13 +13,17 @@ python3 create_train.py
 
 --Dir_import='/home/ar432/DepthSR_Net/Dataset'
 
-- Simulated Validation dataset (Middlebury image): create_test_synthetic.py
+## Simulated Validation dataset (Middlebury image): 
 
-- Real Validation dataset (Hammer data) : create_test_hammer.py 
+create_test_synthetic.py
+
+## Real Validation dataset (Hammer data) : 
+
+create_test_hammer.py 
 
 
 # Network 
-- Training : 
+## Training : 
 
 python3 main_hist.py 
 
@@ -36,7 +40,7 @@ python3 main_hist.py
 --save_parameters='1'  --loss_type='l2' --optimizer_type='Adam'
 
 
-- Testing :
+## Testing :
 
 python3 main_hist.py 
 
