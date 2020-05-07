@@ -130,15 +130,18 @@ def create_noise(Histogram_training_depth_LR, SBR_mean, no_ambient):
         Ny = histogram.shape[1]
         Nbins = histogram.shape[2]
         b = np.zeros((Nx, Ny))
-
-        b_val = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*SBR_mean*Nx*Ny)
-        b = b_val*np.ones((Nx, Ny,Nbins))
+        if no_ambient:
+            b = np.zeros((Nx, Ny,Nbins))
+        else:
+            b_val = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*SBR_mean*Nx*Ny)
+            b = b_val*np.ones((Nx, Ny,Nbins))
             
         histogram_ambient = np.zeros((Nx, Ny, Nbins))
+
         for i in range(Nx):
             for j in range(Ny):
                 histogram_ambient[i,j,:] = histogram[i,j,:] + b[i,j,:]
-        
+    
         histogram_noisy = np.random.poisson(histogram_ambient)
 
         Histogram_training_depth_LR_noisy[index] = histogram_noisy
