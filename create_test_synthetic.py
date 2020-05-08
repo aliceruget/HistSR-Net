@@ -16,7 +16,7 @@ from ops_dataset import (
 )
 
 
-
+print('Attention create noise avec des 1 pour no ambient !')
 # Notes : here we add noise at the level of HR histogram and then we downsample to get input and features. 
 ### --- Define Scale 
 scale = 4
@@ -53,15 +53,15 @@ patch_depth_LR_norm = {}
 patch_depth_LR_norm[0] = I_up
 patch_intensity_norm = {}
 patch_intensity_norm[0] = intensity_image
-intensity_level = 10
-patch_histogram = create_hist(patch_depth_LR_norm, patch_intensity_norm, 1, intensity_level)
-print(patch_histogram[0].shape)
+intensity_level = 1
+patch_histogram_before = create_hist(patch_depth_LR_norm, patch_intensity_norm, intensity_level)
+print(patch_histogram_before[0].shape)
 
 ### --- Create Noisy Histograms 
 print('Create Noisy Histograms  ...')
 SBR_mean = np.Inf#0.41 #0.9
-no_ambient = 1
-patch_histogram = create_noise(patch_histogram, SBR_mean, no_ambient)
+no_ambient = 2
+patch_histogram = create_noise(patch_histogram_before, SBR_mean, no_ambient)
 histogram = patch_histogram[0]
 print(histogram.shape)
 
@@ -161,7 +161,7 @@ print(list_pool_4.shape)
 ### --- Save 
 print('Save ...')
 Dir = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/create_testing/Synthetic_data'
-save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_intensity_level='+str(intensity_level)+'_SBR='+str(SBR_mean))
+save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_intensity_level='+str(intensity_level)+'_noise='+str(no_ambient))
 print(save_path)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
@@ -173,6 +173,10 @@ sio.savemat(os.path.join(save_path,  "0_pool2.mat" ),{'list_pool_2':np.squeeze(l
 sio.savemat(os.path.join(save_path,  "0_pool3.mat" ),{'list_pool_3':np.squeeze(list_pool_3)})
 sio.savemat(os.path.join(save_path,  "0_pool4.mat" ),{'list_pool_4':np.squeeze(list_pool_4)})
 imageio.imwrite(os.path.join(save_path,  "0_RGB.bmp" ), intensity_image)
+
+
+sio.savemat(os.path.join(save_path,  "hist_before.mat" ),patch_histogram_before)
+sio.savemat(os.path.join(save_path,  "hist_after.mat" ),patch_histogram)
 
 fig, axarr = plt.subplots(2,4)
 a1 = axarr[0,0].imshow(np.squeeze(I_up), cmap="gray")
