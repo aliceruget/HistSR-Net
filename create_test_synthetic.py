@@ -17,6 +17,7 @@ from ops_dataset import (
 
 
 print('Attention create noise avec des 1 pour no ambient !')
+print('Attention def SBR = b_val now !')
 # Notes : here we add noise at the level of HR histogram and then we downsample to get input and features. 
 ### --- Define Scale 
 scale = 4
@@ -36,8 +37,9 @@ intensity_image = np.squeeze(intensity[0,0])
 h, w = I_up.shape
 h = h - np.mod(h, 16)
 w = w - np.mod(w, 16)
-I_up = I_up[0:h, 0:w]
-intensity_image = intensity_image[0:h, 0:w]
+I_up = I_up[0:h, 0:400]
+intensity_image = intensity_image[0:h, 0:400]
+intensity_image_ref = intensity_image
 
 ### --- Normalize 
 print('Normalize  ...')
@@ -45,7 +47,9 @@ min_up , max_up  = np.min(I_up), np.max(I_up)
 I_up = (I_up- min_up)/(max_up-min_up)
 min_i, max_i = np.min(intensity_image), np.max(intensity_image)
 intensity_image = (intensity_image-min_i)/(max_i-min_i)
-
+#rescale
+#min_r, max_r = 0.8, 1
+#intensity_image = intensity_image * 0.2 + 0.6
 
 ### --- Create Histograms 
 print('Create Histograms  ...')
@@ -53,17 +57,19 @@ patch_depth_LR_norm = {}
 patch_depth_LR_norm[0] = I_up
 patch_intensity_norm = {}
 patch_intensity_norm[0] = intensity_image
-intensity_level = 1
+intensity_level = 3000
 patch_histogram_before = create_hist(patch_depth_LR_norm, patch_intensity_norm, intensity_level)
 print(patch_histogram_before[0].shape)
+#depth_HR_before_noise =  center_of_mass(patch_histogram_before[0], 'one_image')
 
 ### --- Create Noisy Histograms 
 print('Create Noisy Histograms  ...')
-SBR_mean = np.Inf#0.41 #0.9
-no_ambient = 2
+SBR_mean = 0.01 #0.9
+no_ambient = 0
 patch_histogram = create_noise(patch_histogram_before, SBR_mean, no_ambient)
 histogram = patch_histogram[0]
 print(histogram.shape)
+depth_HR_before_down =  center_of_mass(histogram, 'one_image')
 
 ### --- Create HR intensity 
 print('Create HR intensity  ...')
@@ -161,7 +167,8 @@ print(list_pool_4.shape)
 ### --- Save 
 print('Save ...')
 Dir = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/create_testing/Synthetic_data'
-save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_intensity_level='+str(intensity_level)+'_noise='+str(no_ambient))
+save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_intensity_level='+str(intensity_level)+'_no_ambient='+str(no_ambient)+'_background='+str(SBR_mean))
+#'_rescaled'+
 print(save_path)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
@@ -173,10 +180,14 @@ sio.savemat(os.path.join(save_path,  "0_pool2.mat" ),{'list_pool_2':np.squeeze(l
 sio.savemat(os.path.join(save_path,  "0_pool3.mat" ),{'list_pool_3':np.squeeze(list_pool_3)})
 sio.savemat(os.path.join(save_path,  "0_pool4.mat" ),{'list_pool_4':np.squeeze(list_pool_4)})
 imageio.imwrite(os.path.join(save_path,  "0_RGB.bmp" ), intensity_image)
+imageio.imwrite(os.path.join(save_path,  "ref_RGB.bmp" ), intensity_image_ref)
 
+sio.savemat(os.path.join(save_path,  "hist_before.mat" ),{'hist_before':np.squeeze(patch_histogram_before[0])})
+sio.savemat(os.path.join(save_path,  "hist_after.mat" ),{'hist_after':np.squeeze(patch_histogram[0])})
+sio.savemat(os.path.join(save_path,  "depth_HR_before_down.mat" ),{'depth_HR_before_down':np.squeeze(depth_HR_before_down)})
+sio.savemat(os.path.join(save_path,  "depth_HR_after_down.mat" ),{'depth_HR_after_down':np.squeeze(depth)})
+#sio.savemat(os.path.join(save_path,  "depth_HR_before_noise.mat" ),{'depth_HR_before_noise':np.squeeze(depth_HR_before_noise)})
 
-sio.savemat(os.path.join(save_path,  "hist_before.mat" ),patch_histogram_before)
-sio.savemat(os.path.join(save_path,  "hist_after.mat" ),patch_histogram)
 
 fig, axarr = plt.subplots(2,4)
 a1 = axarr[0,0].imshow(np.squeeze(I_up), cmap="gray")

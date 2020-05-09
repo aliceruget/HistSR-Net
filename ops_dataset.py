@@ -20,6 +20,7 @@ from datetime import datetime
 
 
 def center_of_mass(Histogram_training_depth_LR, type):
+
     if type =='dict':
         nb_images = len(Histogram_training_depth_LR)
         depth_LR = Histogram_training_depth_LR[0]
@@ -27,6 +28,7 @@ def center_of_mass(Histogram_training_depth_LR, type):
         Ny_LR = int(depth_LR.shape[1])
         Nbins = depth_LR.shape[2]
         Depth_images = {}
+
     elif type =='one_image':
         depth_LR = Histogram_training_depth_LR
         nb_images = 1
@@ -79,22 +81,36 @@ def center_of_mass(Histogram_training_depth_LR, type):
     return Depth_images
 
 def create_hist(patch_depth_LR_norm , patch_intensity_norm, intensity_level):
-    nb_patches = len(patch_depth_LR_norm)
-    precision = 100 #precision per bin 
-    sigma = 0.5714 #standard deviation exp
-    array_x = -16 + np.linspace(0, 32*precision, num = 32*precision)/precision
-    array_exp = 1/(np.sqrt(2*np.pi)*sigma) * np.exp(- np.square(array_x)/np.square(sigma))
-    array_bin = np.zeros(len(array_exp))
+    # --- Inputs ---
+    # patch_depth_LR_norm : dictionary of depth image of size [Nx, Ny]
+    # patch_intensity_norm : dictionary of corresponding intensity image normalized from 0 to 1
+    # intensity_level : nb of photon counts
+
+    ## --- Outputs ---
+    #  hist_patch_depth : dictionary of histograms of size [Nx, Ny, Nbins]
+
+    
+    sigma = 0.5714 #standard deviation 
     Nbins = 15
     test_depth = patch_depth_LR_norm[0]
     Nx = test_depth.shape[0]
     Ny = test_depth.shape[1]
+    
     hist_patch_depth = {}
     
-
+    # Definition of "array_bin": array taking all possible value that can appear in the histograms, 
+    # with respect to a certain precision 
+    precision = 100 #precision per bin 
+    array_x = -16 + np.linspace(0, 32*precision, num = 32*precision)/precision
+    array_exp = 1/(np.sqrt(2*np.pi)*sigma) * np.exp(- np.square(array_x)/np.square(sigma))
+    array_bin = np.zeros(len(array_exp))
     for i in range(len(array_exp)-precision+1):
         array_bin[i] = np.sum(array_exp[range(i , i+precision , 1)])
+    max_a, min_a = np.max(array_bin), np.min(array_bin)
+    array_bin = (array_bin - min_a)/(max_a - min_a)
 
+    # Attribution of the values by picking in array_bin
+    nb_patches = len(patch_depth_LR_norm)
     for index_patch in range(nb_patches):
         I_up            = patch_depth_LR_norm[index_patch]
         intensity_image = patch_intensity_norm[index_patch]
@@ -106,45 +122,50 @@ def create_hist(patch_depth_LR_norm , patch_intensity_norm, intensity_level):
                 index_array = precision * (16 - Nbins*depth)
                 for index_bin in range(Nbins):
                     index_array_bin = index_array + precision*index_bin
-                    #index_array = precision * (16 - (Nbins*depth - np.int(Nbins*depth))) + precision*(index_bin - np.int(Nbins*depth))
                     bins[i,j,index_bin] = array_bin[np.int(index_array_bin)]
 
                 bins[i,j,:] = bins[i,j,:] * intensity_image[i,j] * intensity_level
 
         hist_patch_depth[index_patch] = bins
 
-        # if np.mod(index_patch+1, 100)==0:
-        #     print(index_patch)
-        #     print("--- %s seconds ---" % (time.time() - start_time))
 
     return hist_patch_depth
 
 
 def create_noise(Histogram_training_depth_LR, SBR_mean, no_ambient):
+    # --- Inputs ---
+    # Histogram_training_depth_LR : dictionary of histograms of size [Nx, Ny, Nbins]
+    # SBR_mean : mean SBR of an image. We approximate that there is the same ambient signal in every pixel of a patch. 
+    # no_ambient : 0 to add an ambient signal, 0 otherwise
+
+    ## --- Outputs ---
+    #  Histogram_training_depth_LR_noisy : dictionary of noisy histograms of size [Nx, Ny, Nbins]
+
     batch_idx = len(Histogram_training_depth_LR)
+
     Histogram_training_depth_LR_noisy = {}
     for index in range(batch_idx):
-        histogram = Histogram_training_depth_LR[index]
-        
+        histogram = Histogram_training_depth_LR[index] 
         Nx = histogram.shape[0]
         Ny = histogram.shape[1]
         Nbins = histogram.shape[2]
+
+        # Define ambient signal
         b = np.zeros((Nx, Ny))
         if no_ambient:
-            b = no_ambient*np.ones((Nx, Ny,Nbins))
+            b = np.zeros((Nx, Ny,Nbins))
         else:
             b_val = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*SBR_mean*Nx*Ny)
-            b = b_val*np.ones((Nx, Ny,Nbins))
+            b = b_val*np.ones((Nx, Ny, Nbins))
             
+        # Define noisy histogram 
         histogram_ambient = np.zeros((Nx, Ny, Nbins))
-
         for i in range(Nx):
             for j in range(Ny):
                 histogram_ambient[i,j,:] = histogram[i,j,:] + b[i,j,:]
-    
-        histogram_noisy = np.uint16(np.random.poisson(histogram_ambient))
+        histogram_noisy = np.random.poisson(histogram_ambient)
 
-        Histogram_training_depth_LR_noisy[index] = np.float32(histogram_noisy)
+        Histogram_training_depth_LR_noisy[index] = histogram_noisy
 
     return Histogram_training_depth_LR_noisy
 
