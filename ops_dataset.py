@@ -155,7 +155,11 @@ def create_noise(Histogram_training_depth_LR, SBR_mean, no_ambient):
         if no_ambient:
             b = np.zeros((Nx, Ny,Nbins))
         else:
-            b_val = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*SBR_mean*Nx*Ny)
+            #b_val = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*SBR_mean*Nx*Ny)
+            b_val = SBR_mean
+            if index == 0 :
+                SBR = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*b_val*Nx*Ny)
+                print(SBR)
             b = b_val*np.ones((Nx, Ny, Nbins))
             
         # Define noisy histogram 

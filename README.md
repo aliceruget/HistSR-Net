@@ -1,17 +1,7 @@
 # Dataset 
 ## Training dataset 
 
-python3 create_train.py 
-
---config='/home/ar432/DepthSR_Net/Configs/cfg_original_scale4.yaml' 
-
---out_dir='/home/ar432/Hist_SR_Net/Dataset/Train' 
-
---downsample_type='nearest' 
-
---data_type='MPI' 
-
---Dir_import='/home/ar432/DepthSR_Net/Dataset'
+python3 create_train.py --config='/home/ar432/DepthSR_Net/Configs/cfg_original_scale4.yaml' --out_dir='/home/ar432/Hist_SR_Net/Dataset/Train' --downsample_type='nearest' --data_type='MPI' --Dir_import='/home/ar432/DepthSR_Net/Dataset'
 
 
 python3 create_train.py --config='/Users/aliceruget/Documents/PhD/DepthSR_Net_AR.bak/Configs/cfg_original_scale4.yaml' --out_dir='/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset' --downsample_type='nearest' --data_type='MPI' --Dir_import='/Users/aliceruget/Documents/PhD/Dataset/RAW'
@@ -28,33 +18,13 @@ create_test_hammer.py
 # Network 
 ## Training 
 
-python3 main_hist.py 
-
---data_path='/home/ar432/Hist_SR_Net/Dataset/Train/depth_4/DATA_TRAIN_HISTOGRAM_MPIMPI_nearest' 
-
---is_train='1' 
-
---config='/home/ar432/DepthSR_Net/Configs/cfg_original_scale4.yaml' 
-
---checkpoint_dir='/home/ar432/Hist_SR_Net/Checkpoint/new_MPI'  
-
---result_path='/home/ar432/Hist_SR_Net/Results/new_MPI/' 
-
---save_parameters='1'  --loss_type='l2' --optimizer_type='Adam'
+python3 main_hist.py --data_path='/home/ar432/Hist_SR_Net/Dataset/Train/depth_4/DATA_TRAIN_HISTOGRAM_noisy_intensity10_background1_MPI_nearest' --is_train='1' --config='/home/ar432/DepthSR_Net/Configs/cfg_original_scale4.yaml' --checkpoint_dir='/home/ar432/Hist_SR_Net/Checkpoint/noisy_intensity10_background1_MPI'  --result_path='/home/ar432/Hist_SR_Net/Results/noisy_intensity10_background1_MPI/' --save_parameters='1'  --loss_type='l2' --optimizer_type='Adam'
 
 
 ## Testing 
 
-python3 main_hist.py 
+python3 main_hist.py --data_path='/home/ar432/Dataset/Test/Middlebury/SBR_0.01' --is_train='0' --config='/home/ar432/DepthSR_Net/Configs/cfg_original_scale4.yaml' --checkpoint_dir='/home/ar432/Hist_SR_Net/Checkpoint/SBR_0.4_MPI'  
+--result_path='/home/ar432/Hist_SR_Net/Results/SBR_0.4_MPI/Middlebury_SBR_0.01' --save_parameters='1'  --loss_type='l2' --optimizer_type='Adam'
 
---data_path='/home/ar432/Dataset/Test/Hammer_data' 
 
---is_train='0' 
-
---config='/home/ar432/DepthSR_Net/Configs/cfg_original_scale4.yaml' 
-
---checkpoint_dir='/home/ar432/Hist_SR_Net/Checkpoint/new_MPI'  
-
---result_path='/home/ar432/Hist_SR_Net/Results/new_MPI/Test_Hammer' 
-
---save_parameters='1'  --loss_type='l2' --optimizer_type='Adam'
+python3 main_hist.py --data_path='/home/ar432/Dataset/Test/Middlebury/SBR_0.01' --is_train='0' --config='/home/ar432/DepthSR_Net/Configs/cfg_original_scale4.yaml' --checkpoint_dir='/home/ar432/DepthSR_Net/Checkpoint/depth_4/MPI/depth_data/nearest/Adam/loss_l2'  --result_path='/home/ar432/DepthSR_Net/Results/depth_4/data_MPI/depth_data/nearest/Adam/loss_l2/Middlebury_0.01_hist' --save_parameters='1'  --loss_type='l2' --optimizer_type='Adam'

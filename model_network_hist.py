@@ -330,7 +330,7 @@ class SRCNN(object):
       # imsave(result, image_path)
 
       init_image = np.minimum(np.maximum(depth_down.squeeze(),0),1)
-      init_image = ((init_image)*(max_label-min_label)+min_label).astype(np.uint8)
+      init_image = ((init_image)*(max_label-min_label)+min_label)#.astype(np.uint8)
       init_rmse = rmse(depth_label, init_image)   
       print("initial rmse: [%f]" % init_rmse)
       
