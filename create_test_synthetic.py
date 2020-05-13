@@ -8,7 +8,7 @@ import glob
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
-import cv2
+
 from ops_dataset import (
     create_noise,
     create_hist,
@@ -39,14 +39,15 @@ h = h - np.mod(h, 16)
 w = w - np.mod(w, 16)
 I_up = I_up[0:h, 0:400]
 intensity_image = intensity_image[0:h, 0:400]
-intensity_image_ref = intensity_image
+#intensity_image_ref = intensity_image
 
 ### --- Normalize 
 print('Normalize  ...')
 min_up , max_up  = np.min(I_up), np.max(I_up)
 I_up = (I_up- min_up)/(max_up-min_up)
-min_i, max_i = np.min(intensity_image), np.max(intensity_image)
-intensity_image = (intensity_image-min_i)/(max_i-min_i)
+min_i, max_i = np.amin(intensity_image), np.amax(intensity_image)
+intensity_image = (intensity_image - min_i)/(max_i - min_i)
+#intensity_image_ref = intensity_image
 #rescale
 #min_r, max_r = 0.8, 1
 #intensity_image = intensity_image * 0.4 + 0.6
@@ -57,14 +58,17 @@ patch_depth_LR_norm = {}
 patch_depth_LR_norm[0] = I_up
 patch_intensity_norm = {}
 patch_intensity_norm[0] = intensity_image
-intensity_level = 10 #3000
+intensity_level = 30#3000
 patch_histogram_before = create_hist(patch_depth_LR_norm, patch_intensity_norm, intensity_level)
 print(patch_histogram_before[0].shape)
+histogram_before = patch_histogram_before[0]
+intensity_image_ref = np.sum(histogram_before, axis = 2)
+
 #depth_HR_before_noise =  center_of_mass(patch_histogram_before[0], 'one_image')
 
 ### --- Create Noisy Histograms 
 print('Create Noisy Histograms  ...')
-SBR_mean = 1#0.4 #0.9
+SBR_mean = 5#0.4 #0.9
 no_ambient = 0
 patch_histogram = create_noise(patch_histogram_before, SBR_mean, no_ambient)
 histogram = patch_histogram[0]
@@ -73,14 +77,35 @@ depth_HR_before_down =  center_of_mass(histogram, 'one_image')
 
 ### --- Create HR intensity 
 print('Create HR intensity  ...')
-intensity_image = np.sum(histogram, 2)
+intensity_image_withb = np.sum(histogram, axis = 2)
+#intensity_image = np.sum(histogram, 2)
+#background = np.median(histogram,axis = 2)
+background = SBR_mean*np.ones((histogram.shape[0], histogram.shape[1],histogram.shape[2]))
+print(background.shape)
+
+new_histogram = histogram-background
+Nx = new_histogram.shape[0]
+Ny = new_histogram.shape[1]
+Nbins = new_histogram.shape[2]
+for x in range(Nx):
+    for y in range(Ny):
+        for t in range(Nbins):
+            if new_histogram[x,y,t]<0:
+                new_histogram[x,y,t]=0
+max_val = np.amax(new_histogram)
+min_val = np.amin(new_histogram)
+min_array = min_val*np.ones([Nx, Ny, Nbins])
+max_array = max_val*np.ones([Nx, Ny, Nbins])
+new_histogram = (new_histogram - min_array)/(max_val-min_val)
+
+intensity_image = np.sum(new_histogram, axis = 2)
 print(intensity_image.shape)
 
 ### --- Normalize intensity again 
 print('Normalize intensity  ...')
-min_i, max_i = np.min(intensity_image), np.max(intensity_image)
-intensity_image = (intensity_image - min_i)/(max_i - min_i)
-
+#min_i, max_i = np.amin(intensity_image), np.amax(intensity_image)
+#intensity_image = (intensity_image - min_i)/(max_i - min_i)
+intensity_image = intensity_image
 
 ### --- Downsample Histograms 
 print('Downsample Histograms  ...')
@@ -166,9 +191,9 @@ print(list_pool_4.shape)
 
 ### --- Save 
 print('Save ...')
-#Dir = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/create_testing/Synthetic_data'
-save_path = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/TEST/Synthetic_data/depth_4/DATA_TEST_art_i10_b1/'
-#save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_rescaled_intensity_level='+str(intensity_level)+'_no_ambient='+str(no_ambient)+'_background='+str(SBR_mean))
+Dir = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/create_testing/Synthetic_data'
+#save_path = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/TEST/Synthetic_data/depth_4/DATA_TEST_art_i10_b1/'
+save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_rescaled_intensity_level='+str(intensity_level)+'_no_ambient='+str(no_ambient)+'_background='+str(SBR_mean))
 #'_rescaled'+
 print(save_path)
 if not os.path.exists(save_path):
@@ -180,13 +205,16 @@ sio.savemat(os.path.join(save_path,  "0_pool1.mat" ),{'list_pool_1':np.squeeze(l
 sio.savemat(os.path.join(save_path,  "0_pool2.mat" ),{'list_pool_2':np.squeeze(list_pool_2)})
 sio.savemat(os.path.join(save_path,  "0_pool3.mat" ),{'list_pool_3':np.squeeze(list_pool_3)})
 sio.savemat(os.path.join(save_path,  "0_pool4.mat" ),{'list_pool_4':np.squeeze(list_pool_4)})
-imageio.imwrite(os.path.join(save_path,  "0_RGB.bmp" ), intensity_image)
+sio.savemat(os.path.join(save_path,  "0_RGB.mat" ),{'intensity_image':np.squeeze(intensity_image)})
+sio.savemat(os.path.join(save_path,  "0_RGB_withb.mat" ),{'intensity_image_withb':np.squeeze(intensity_image_withb)})
+sio.savemat(os.path.join(save_path,  "0_RGB_ref.mat" ),{'intensity_image_ref':np.squeeze(intensity_image_ref)})
+#imageio.imwrite(os.path.join(save_path,  "0_RGB.bmp" ), intensity_image)
 #imageio.imwrite(os.path.join(save_path,  "ref_RGB.bmp" ), intensity_image_ref)
 
-#sio.savemat(os.path.join(save_path,  "hist_before.mat" ),{'hist_before':np.squeeze(patch_histogram_before[0])})
-#sio.savemat(os.path.join(save_path,  "hist_after.mat" ),{'hist_after':np.squeeze(patch_histogram[0])})
-#sio.savemat(os.path.join(save_path,  "depth_HR_before_down.mat" ),{'depth_HR_before_down':np.squeeze(depth_HR_before_down)})
-#sio.savemat(os.path.join(save_path,  "depth_HR_after_down.mat" ),{'depth_HR_after_down':np.squeeze(depth)})
+sio.savemat(os.path.join(save_path,  "hist_before.mat" ),{'hist_before':np.squeeze(patch_histogram_before[0])})
+sio.savemat(os.path.join(save_path,  "hist_after.mat" ),{'hist_after':np.squeeze(patch_histogram[0])})
+sio.savemat(os.path.join(save_path,  "depth_HR_before_down.mat" ),{'depth_HR_before_down':np.squeeze(depth_HR_before_down)})
+sio.savemat(os.path.join(save_path,  "depth_HR_after_down.mat" ),{'depth_HR_after_down':np.squeeze(depth)})
 #sio.savemat(os.path.join(save_path,  "depth_HR_before_noise.mat" ),{'depth_HR_before_noise':np.squeeze(depth_HR_before_noise)})
 
 
