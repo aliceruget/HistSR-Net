@@ -58,7 +58,7 @@ patch_depth_LR_norm = {}
 patch_depth_LR_norm[0] = I_up
 patch_intensity_norm = {}
 patch_intensity_norm[0] = intensity_image
-intensity_level = 3000#3000
+intensity_level = 10#3000
 patch_histogram_before = create_hist(patch_depth_LR_norm, patch_intensity_norm, intensity_level)
 print(patch_histogram_before[0].shape)
 histogram_before = patch_histogram_before[0]
@@ -68,7 +68,7 @@ intensity_image_ref = np.sum(histogram_before, axis = 2)
 
 ### --- Create Noisy Histograms 
 print('Create Noisy Histograms  ...')
-SBR_mean = 0.4#0.4 #0.9
+SBR_mean = 0.04#0.4 #0.9
 ambient_type = 'constant_SBR'
 patch_histogram = create_noise(patch_histogram_before, SBR_mean, ambient_type)
 histogram = patch_histogram[0]

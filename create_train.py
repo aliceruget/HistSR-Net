@@ -47,7 +47,7 @@ if not os.path.exists(Directory):
 print(scale)
 start_time_initial = time.time()
 #print('!!!!!!!!!!!!!!ATTENTION PAS dE NOISE POISSON ICI !!!!!!!!!!!!!!')
-print('ATTENTION SBR = b_val = 1')
+print('ATTENTION SBR ! = b_val = 1')
 print('ATTENTION intensity level of 10')
 #print('ATTENTION QUE 2 IMAGES')
 #print('ATTENTION QUE de 0 a 287')
@@ -128,7 +128,7 @@ for index in index_training:
 print('Training : '+str(len(depth_training))+ ' images')
 print('Validation : '+str(len(depth_validation))+ ' images\n')
 
-# ---- 3. Flipping and rotation of Training dataset ---------------------------------------------
+# ---- 3. Flipping and rotation of Training and Validation dataset ---------------------------------------------
 print('Flipping and rotation of Training dataset...')
 intensity_training_aug = {}
 depth_training_aug = {}
@@ -153,6 +153,29 @@ for index in range(0 , len(intensity_training),1):
 
         i = i + 2
 
+print('Flipping and rotation of Validation dataset...')
+intensity_validation_aug = {}
+depth_validation_aug = {}
+i = 0
+for index in range(0 , len(intensity_validation),1):
+    intensity_im        = intensity_validation[index]
+    depth_im            = depth_validation[index]
+
+    intensity_im_flip   = np.flipud(intensity_im)
+    depth_im_flip       = np.flipud(depth_im)
+
+    for angle in range(4):
+        intensity_im        = np.rot90(intensity_im)
+        depth_im            = np.rot90(depth_im)
+        intensity_im_flip   = np.rot90(intensity_im_flip)
+        depth_im_flip       = np.rot90(depth_im_flip)
+
+        intensity_validation_aug[i]   = intensity_im
+        intensity_validation_aug[i+1] = intensity_im_flip
+        depth_validation_aug[i]       = depth_im
+        depth_validation_aug[i+1]     = depth_im_flip
+
+        i = i + 2
 print('Training : '+str(len(depth_training_aug))+ ' images')
 print('Validation : '+str(len(depth_validation))+ ' images\n')
 
@@ -162,7 +185,7 @@ print('Create Patches ...')
 patch_training_intensity , patch_training_depth = create_patches(intensity_training_aug , depth_training_aug , image_size , stride)
 print('Training : '+str(len(patch_training_intensity)) + ' patches')
 
-patch_validation_intensity , patch_validation_depth = create_patches(intensity_validation , depth_validation , image_size , stride)
+patch_validation_intensity , patch_validation_depth = create_patches(intensity_validation_aug , depth_validation_aug , image_size , stride)
 print('Validation : '+str(len(patch_validation_depth)) + ' patches\n')
 
 # ---- 5. Normalization ----------------------------------------------------------------------------
@@ -226,12 +249,12 @@ print('Validation : '+ str(len(Histogram_validation_depth_LR))+' histograms of s
 
 # ---- 7. Add Noise ------------------------------------------------------------------------
 print("Create Noisy Histograms ...")
-SBR_mean = 1 #0.9
-no_ambient = 0 
-Histogram_training_depth_LR_noisy = create_noise(Histogram_training_depth_LR, SBR_mean, no_ambient)
+SBR_mean = 0.04 #0.9
+ambient_type = 'constant_SBR'
+Histogram_training_depth_LR_noisy = create_noise(Histogram_training_depth_LR, SBR_mean, ambient_type)
 print('Training : ' + str(len(Histogram_training_depth_LR_noisy))+' histograms of size '+ str(Histogram_training_depth_LR_noisy[0].shape))
 
-Histogram_validation_depth_LR_noisy = create_noise(Histogram_validation_depth_LR, SBR_mean, no_ambient)
+Histogram_validation_depth_LR_noisy = create_noise(Histogram_validation_depth_LR, SBR_mean, ambient_type)
 print('Validation : '+ str(len(Histogram_validation_depth_LR_noisy))+' histograms of size '+ str(Histogram_validation_depth_LR_noisy[0].shape)+'\n')
 
 # ---- 8. Create HR intensity -------------------------------------
