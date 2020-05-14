@@ -132,7 +132,7 @@ def create_hist(patch_depth_LR_norm , patch_intensity_norm, intensity_level):
     return hist_patch_depth
 
 
-def create_noise(Histogram_training_depth_LR, SBR_mean, no_ambient):
+def create_noise(Histogram_training_depth_LR, SBR_mean, ambient_type):
     # --- Inputs ---
     # Histogram_training_depth_LR : dictionary of histograms of size [Nx, Ny, Nbins]
     # SBR_mean : mean SBR of an image. We approximate that there is the same ambient signal in every pixel of a patch. 
@@ -151,16 +151,25 @@ def create_noise(Histogram_training_depth_LR, SBR_mean, no_ambient):
         Nbins = histogram.shape[2]
 
         # Define ambient signal
-        b = np.zeros((Nx, Ny))
-        if no_ambient:
+        b = np.zeros((Nx, Ny, Nbins))
+        if ambient_type == 'no_ambient':
             b = np.zeros((Nx, Ny,Nbins))
-        else:
-            #b_val = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*SBR_mean*Nx*Ny)
-            b_val = SBR_mean
+
+        elif ambient_type == 'constant_b':
+            b_val = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*SBR_mean*Nx*Ny)
+            #b_val = SBR_mean
             if index == 0 :
                 SBR = np.sum(np.squeeze(histogram[:,:,:])) / (Nbins*b_val*Nx*Ny)
                 print(SBR)
             b = b_val*np.ones((Nx, Ny, Nbins))
+
+        elif ambient_type == 'constant_SBR':
+            for i in range(Nx):
+                for j in range(Ny):
+                    b_val = np.sum(np.squeeze(histogram[i,j,:])) / (Nbins*SBR_mean)
+                    b[i,j,:] = np.ones(Nbins)*b_val
+                    #print(b_val)
+         
             
         # Define noisy histogram 
         histogram_ambient = np.zeros((Nx, Ny, Nbins))

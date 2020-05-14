@@ -18,9 +18,9 @@ import skimage.measure
 ### 1. Clean Histograms from last and first row 
 # ---------------------------------------------------------------------------------
 print('Clean_Histogram...')
-data_dir = '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/Raw_histograms'
-list_hist =glob.glob(os.path.join(data_dir,'0_hist.mat'))
-
+data_dir = '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/Raw_histogram'
+list_hist =glob.glob(os.path.join(data_dir,'*_hist.mat'))
+print(len(list_hist))
 for idx in range(len(list_hist)):
     hist_input_image   = glob.glob(os.path.join(data_dir,str(idx)+'_hist.mat'))
     histo = sio.loadmat(hist_input_image[0])['hist_LR_initial']

@@ -17,7 +17,7 @@ from ops_dataset import (
 
 
 print('Attention create noise avec des 1 pour no ambient !')
-print('Attention def SBR = b_val now !')
+print('Attention def SBR different de b_val now !')
 # Notes : here we add noise at the level of HR histogram and then we downsample to get input and features. 
 ### --- Define Scale 
 scale = 4
@@ -58,7 +58,7 @@ patch_depth_LR_norm = {}
 patch_depth_LR_norm[0] = I_up
 patch_intensity_norm = {}
 patch_intensity_norm[0] = intensity_image
-intensity_level = 30#3000
+intensity_level = 3000#3000
 patch_histogram_before = create_hist(patch_depth_LR_norm, patch_intensity_norm, intensity_level)
 print(patch_histogram_before[0].shape)
 histogram_before = patch_histogram_before[0]
@@ -68,9 +68,9 @@ intensity_image_ref = np.sum(histogram_before, axis = 2)
 
 ### --- Create Noisy Histograms 
 print('Create Noisy Histograms  ...')
-SBR_mean = 5#0.4 #0.9
-no_ambient = 0
-patch_histogram = create_noise(patch_histogram_before, SBR_mean, no_ambient)
+SBR_mean = 0.4#0.4 #0.9
+ambient_type = 'constant_SBR'
+patch_histogram = create_noise(patch_histogram_before, SBR_mean, ambient_type)
 histogram = patch_histogram[0]
 print(histogram.shape)
 depth_HR_before_down =  center_of_mass(histogram, 'one_image')
@@ -193,7 +193,7 @@ print(list_pool_4.shape)
 print('Save ...')
 Dir = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/create_testing/Synthetic_data'
 #save_path = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/TEST/Synthetic_data/depth_4/DATA_TEST_art_i10_b1/'
-save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_rescaled_intensity_level='+str(intensity_level)+'_no_ambient='+str(no_ambient)+'_background='+str(SBR_mean))
+save_path = os.path.join(Dir, 'depth_'+str(scale), 'DATA_TEST_art_rescaled_intensity_level='+str(intensity_level)+'_ambient_type='+str(ambient_type)+'_background='+str(SBR_mean))
 #'_rescaled'+
 print(save_path)
 if not os.path.exists(save_path):
