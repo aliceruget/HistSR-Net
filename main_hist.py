@@ -75,7 +75,6 @@ def main(_):
   if not os.path.exists(FLAGS.sample_dir):
     os.makedirs(FLAGS.sample_dir)
   if FLAGS.is_train:
-    print('TESTTESTTESTTESTTESTTEST')
     with tf.compat.v1.Session(config=config_sess) as sess:
       srcnn = SRCNN(sess, 
                   image_size=FLAGS.image_size, 
@@ -145,10 +144,7 @@ def main(_):
                   pool3 = pool3_list_image[0],
                   pool4 = pool4_list_image[0]
                   )
-        recon = srcnn.train(FLAGS)
-        #srcnn.train(FLAGS)
-        if not os.path.exists(os.path.join(results_path,'Reconstructions')):
-            os.makedirs(os.path.join(results_path,'Reconstructions'))
-        sio.savemat(os.path.join(results_path,'Reconstructions',str(idx)+'recon.mat'), {'recon':recon})
+        srcnn.train(FLAGS)
+        
 if __name__ == '__main__':
  tf.compat.v1.app.run()

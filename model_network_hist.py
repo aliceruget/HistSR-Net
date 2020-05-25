@@ -20,6 +20,13 @@ from center_of_mass import center_of_mass
 #gradients = compute_gradients(self.loss, var_list=None, gate_gradients=GATE_OP, aggregation_method=None,colocate_gradients_with_ops=False, grad_loss=None)
 #print(tf.compat.v1.global_variables(scope=None))   
 #      
+      # #original : self.train_op = tf.train.AdamOptimizer(config.learning_rate,0.9).minimize(self.loss)
+      # if self.optimizer_type =='Adam':
+      #   optimizer = tf.compat.v1.train.AdamOptimizer(1e-3,0.9)
+      # elif self.optimizer_type =='Proximal':
+      #   optimizer = tf.compat.v1.train.ProximalAdagradOptimizer(1e-1, initial_accumulator_value=0.1, l1_regularization_strength=0.0, \
+      #     l2_regularization_strength=0.0, use_locking=False, name='ProximalAdagrad')
+
 class SRCNN(object):
 
   def __init__(self, 
@@ -88,7 +95,7 @@ class SRCNN(object):
     if self.i < 1 :
       self.pred, self.dictionary, self.residual_map = self.model()
     
-    self.pred_test, self.dictionary_test = self.model_test()
+    #self.pred_test, self.dictionary_test = self.model_test()
 
     if self.test_dir is None:
       if self.loss_type =='l2':
@@ -117,10 +124,10 @@ class SRCNN(object):
       depth_input_down_list=sorted(glob.glob(os.path.join(data_dir,'*_patch_depth_down.mat')))
       depth_label_list     =sorted(glob.glob(os.path.join(data_dir,'*_patch_depth_label.mat')))
       rgb_input_list       =sorted(glob.glob(os.path.join(data_dir,'*_patch_I_add.mat')))
-      depth_pool1         =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool1.mat')))
-      depth_pool2         =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool2.mat')))
-      depth_pool3         =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool3.mat')))
-      depth_pool4         =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool4.mat')))
+      depth_pool1          =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool1.mat')))
+      depth_pool2          =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool2.mat')))
+      depth_pool3          =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool3.mat')))
+      depth_pool4          =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool4.mat')))
 
     
       seed=545
@@ -148,13 +155,6 @@ class SRCNN(object):
       depth_pool4_test          =sorted(glob.glob(os.path.join(data_dir,'*_patch_pool4_test.mat')))
 
       # --------------------- Define optimizer ---------------------
-      #original : self.train_op = tf.train.AdamOptimizer(config.learning_rate,0.9).minimize(self.loss)
-      if self.optimizer_type =='Adam':
-        optimizer = tf.compat.v1.train.AdamOptimizer(1e-3,0.9)
-      elif self.optimizer_type =='Proximal':
-        optimizer = tf.compat.v1.train.ProximalAdagradOptimizer(1e-1, initial_accumulator_value=0.1, l1_regularization_strength=0.0, \
-          l2_regularization_strength=0.0, use_locking=False, name='ProximalAdagrad')
-      
       optimizer = tf.compat.v1.train.AdamOptimizer(config.learning_rate,0.9)
       self.grads_and_vars = optimizer.compute_gradients(self.loss)
       self.train_op = optimizer.minimize(self.loss)
@@ -173,15 +173,10 @@ class SRCNN(object):
     # -----------------------  Train  ----------------------------------------------------------
       print("Training...")
       loss_training = []
-      std_training = []
       loss_validation = []
-      std_validation = []
-      
       
       for ep in range(config.epoch):
-        #print(ep)
         batch_idxs=len(depth_input_down_list)
-        #print(batch_idxs)
 
         for idx in range(0,batch_idxs):
           batch_depth_down    = get_image_batch_new(depth_input_down_list[idx])#/15
@@ -191,29 +186,14 @@ class SRCNN(object):
           batch_pool2         = get_image_batch_new(depth_pool2[idx])#/15
           batch_pool3         = get_image_batch_new(depth_pool3[idx])#/15
           batch_pool4         = get_image_batch_new(depth_pool4[idx])#/15
-          
-          
-          if counter == 0:
-            initial_error, dictionary_initial = self.sess.run([self.loss, self.dictionary], feed_dict={self.images: batch_depth_down, self.labels: batch_depth_labels,self.I_add:batch_I_add,\
-              self.pool1_input: batch_pool1, self.pool2_input:batch_pool2, self.pool3_input:batch_pool3, self.pool4_input:batch_pool4})
-            dictionary_initial['initial_error'] = initial_error
-            sio.savemat(os.path.join(config.results_path, 'parameters_initial.mat'), dictionary_initial)
-
-          _, labels_loss, err, std, pred, dictionary,residual_map = self.sess.run([self.train_op, self.labels,self.loss,self.stddev,self.pred,self.dictionary,self.residual_map], \
-            feed_dict={self.images: batch_depth_down, self.labels: batch_depth_labels,self.I_add:batch_I_add,\
-              self.pool1_input: batch_pool1, self.pool2_input:batch_pool2, self.pool3_input:batch_pool3, self.pool4_input:batch_pool4})
+        
+          _,  err, dictionary = self.sess.run([self.train_op, self.loss, self.dictionary], \
+                  feed_dict={self.images: batch_depth_down, self.labels: batch_depth_labels,self.I_add:batch_I_add,\
+                  self.pool1_input: batch_pool1, self.pool2_input:batch_pool2, self.pool3_input:batch_pool3, self.pool4_input:batch_pool4})
           counter += 1
-          loss_training.append(err)
-          std_training.append(std)
+          loss_training.append(err) 
+          dictionary['loss_training']   = loss_training
 
-          dictionary['labels_loss']       = labels_loss
-          dictionary['residual_map']      = residual_map
-          dictionary['pred']              = pred
-          dictionary['batch_depth_down']  = batch_depth_down
-          dictionary['batch_depth_labels']= batch_depth_labels
-          dictionary['batch_I_add']       = batch_I_add
-          dictionary['loss_training']     = loss_training
-          dictionary['std_training']      = std_training
        
           # ------ Validation  ------ 
           if idx == batch_idxs-1:
@@ -222,29 +202,23 @@ class SRCNN(object):
             err_test =  np.ones(batch_test_idxs)
 
             for idx_test in range(0,batch_test_idxs):
-                batch_depth_down    = get_image_batch(depth_input_down_list_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
-                batch_depth_labels  = get_image_batch(depth_label_list_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)
-                batch_I_add         = get_image_batch(rgb_input_list_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size) #/255
-                batch_pool1         = get_image_batch(depth_pool1_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
-                batch_pool2         = get_image_batch(depth_pool2_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
-                batch_pool3         = get_image_batch(depth_pool3_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
-                batch_pool4         = get_image_batch(depth_pool4_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
+                batch_depth_down_val    = get_image_batch(depth_input_down_list_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
+                batch_depth_labels_val  = get_image_batch(depth_label_list_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)
+                batch_I_add_val         = get_image_batch(rgb_input_list_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size) #/255
+                batch_pool1_val         = get_image_batch(depth_pool1_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
+                batch_pool2_val         = get_image_batch(depth_pool2_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
+                batch_pool3_val         = get_image_batch(depth_pool3_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
+                batch_pool4_val        = get_image_batch(depth_pool4_test, idx_test*config.batch_size , (idx_test+1)*config.batch_size)#/15
                 
-                err_test[idx_test] = self.sess.run(self.loss, feed_dict={self.images: batch_depth_down, self.labels: batch_depth_labels,self.I_add:batch_I_add,\
-                  self.pool1_input: batch_pool1, self.pool2_input:batch_pool2, self.pool3_input:batch_pool3, self.pool4_input:batch_pool4})    
-                test_pred = self.sess.run(self.pred, feed_dict={self.images: batch_depth_down, self.labels: batch_depth_labels,self.I_add:batch_I_add,\
-                  self.pool1_input: batch_pool1, self.pool2_input:batch_pool2, self.pool3_input:batch_pool3, self.pool4_input:batch_pool4}) 
-
+                err_test[idx_test] = self.sess.run(self.loss, feed_dict={self.images: batch_depth_down_val, self.labels: batch_depth_labels_val,self.I_add:batch_I_add_val,\
+                  self.pool1_input: batch_pool1_val, self.pool2_input:batch_pool2_val, self.pool3_input:batch_pool3_val, self.pool4_input:batch_pool4_val})    
+                dictio =  self.sess.run(self.dictionary,feed_dict={self.images: batch_depth_down_val, self.labels: batch_depth_labels_val,self.I_add:batch_I_add_val,\
+                  self.pool1_input: batch_pool1_val, self.pool2_input:batch_pool2_val, self.pool3_input:batch_pool3_val, self.pool4_input:batch_pool4_val}) 
+                
                 if idx_test == 0:
-                  dictionary_validation['pred'+str(idx_test)] = test_pred
-                  dictionary_validation['batch_depth_down'+str(idx_test)] = batch_depth_down
-                  dictionary_validation['batch_depth_labels'+str(idx_test)] = batch_depth_labels
-                  dictionary_validation['batch_I_add'+str(idx_test)] = batch_I_add
+                  dictionary_validation = dictio
 
-            std_validation.append(np.std(err_test))
             loss_validation.append(np.mean(err_test))
-            dictionary_validation['err_test']        = err_test
-            dictionary_validation['std_validation']  = std_validation
             dictionary_validation['loss_validation'] = loss_validation
 
             print("Validation-------Epoch: [%2d], step: [%2d], time: [%4.4f], loss_validation: [%.8f]" \
@@ -255,10 +229,6 @@ class SRCNN(object):
                 self.save(config.checkpoint_dir, counter)
                 sio.savemat(os.path.join(config.results_path, 'parameters_validation_ep_'+str(ep)+'.mat'), dictionary_validation)
                 sio.savemat(os.path.join(config.results_path, 'parameters_training_ep_'+str(ep)+'.mat'), dictionary)
-                #subprocess.run(["python3", "plot_features_with_colorbar.py", "--data_dir="+str(config.results_path), "--is_train='1'","--parameter_name=parameters_training_ep_"+str(ep)])
-                #subprocess.run(["python3", "plot_filters_with_colorbar.py", "--data_dir="+str(config.results_path),"--parameter_name=parameters_training_ep_"+str(ep)])
-                #subprocess.run(["python3", "plot_biases.py", "--data_dir="+str(config.results_path),"--parameter_name=parameters_training_ep_"+str(ep)])
-                #subprocess.run(["python3", "plot_loss.py", "--data_dir="+str(config.results_path), "--parameter_name=parameters_training_ep_"+str(ep)])
                 print('Parameters Saved')
 
 
@@ -316,43 +286,26 @@ class SRCNN(object):
  
       result, dictionary = self.sess.run([self.pred_test,self.dictionary_test], feed_dict= {self.depth_test:depth_down ,self.I_add_test:I_add_input_test, \
          self.pool1_input_test:list_pool_1, self.pool2_input_test:list_pool_2, self.pool3_input_test:list_pool_3,self.pool4_input_test:list_pool_4})
-     
-      print('Rec time ', time.time() - tm)
       
-      result_bis = np.minimum(np.maximum(result.squeeze(),0),1)
-
-      result_bis = ((result_bis)*(max_label-min_label)+min_label).astype(np.uint8)
-      rmse_value = rmse(depth_label,result_bis) 
-      
+      rec_time = time.time() - tm
+      print('Rec time ', rec_time)
+      rmse_value = rmse(np.squeeze(depth_label),np.squeeze(result))
       print("rmse: [%f]" % rmse_value)
-      # image_path = config.results_path     
-      # image_path = os.path.join(image_path, str(self.i)+"_sr.png" )
-      # imsave(result, image_path)
-
-      init_image = np.minimum(np.maximum(depth_down.squeeze(),0),1)
-      init_image = ((init_image)*(max_label-min_label)+min_label)#.astype(np.uint8)
-      init_rmse = rmse(depth_label, init_image)   
+      init_image = np.squeeze(depth_down)
+      #init_image = np.minimum(np.maximum(depth_down.squeeze(),0),1)
+      #init_image = ((init_image)*(max_label-min_label)+min_label).astype(np.uint8)
+      init_rmse = rmse(np.squeeze(depth_label), np.squeeze(init_image))
       print("initial rmse: [%f]" % init_rmse)
       
-      #dictionary['rmse']      = {'init_rmse' : init_rmse, 'rmse' : rmse_value}
-      #dictionary['inputs']    = {'I_init': I_add_input_test, 'D_down':depth_down, 'D_label':depth_label}
-      #dictionary['Rec time '] = time.time() - tm
-      dictionary_bis = {}
-      dictionary_bis['result'] = result
-      dictionary_bis['depth_down']= depth_down
-      dictionary_bis['depth_label']= depth_label
-      dictionary['depth_down'] = depth_down
-      dictionary_bis['list_pool_1'] = list_pool_1
-      dictionary_bis['list_pool_2'] = list_pool_2
-      dictionary_bis['list_pool_3'] = list_pool_3
-      dictionary_bis['list_pool_4'] = list_pool_4
-      dictionary_bis['list_pool_4'] = list_pool_4
-      dictionary_bis['I_add_input_test'] = I_add_input_test
-
+      dictionary['rmse']      = {'init_rmse' : init_rmse, 'rmse' : rmse_value}
+      dictionary['inputs']    = {'I_init': I_add_input_test, 'D_down':depth_down, 'D_label':depth_label}
+      dictionary['init_rmse'] = init_rmse
+      dictionary['rmse_value'] = rmse_value
+      dictionary['Rec_time'] = rec_time
      
 
       if config.save_parameters:     
-         sio.savemat(os.path.join(config.results_path, 'parameters.mat'), dictionary_bis)
+         sio.savemat(os.path.join(config.results_path, 'parameters.mat'), dictionary)
          print('PARAMETERS SAVED !!!!!!!')
       return(result)
 
@@ -483,7 +436,8 @@ class SRCNN(object):
            'Input_Pyramid_bias':{'bias_input1':bias_input1, 'bias_input2':bias_input2, 'bias_input3':bias_input3, 'bias_input4':bias_input4}, \
            'data':{'labels':self.labels, 'depth_down':self.images, 'I_add':self.I_add}}
       dictionary = {'data':{'labels':self.labels, 'depth_down':self.images, 'I_add':self.I_add},\
-        'results':{'result' : output, 'residual_map':residual_map}}
+        'results':{'result' : output, 'residual_map':residual_map},\
+          'features':{'pool1_input':pool1_input, 'pool2_input':pool2_input, 'pool3_input':pool3_input, 'pool4_input':pool4_input}}
 
     return output, dictionary, residual_map
 

@@ -255,9 +255,10 @@ def input_setup(sess, config):
 def rmse(im1,im2):
   # import pdb  
   # pdb.set_trace()
-  diff=np.square(im1.astype(np.float)-im2.astype(np.float))
+  #diff=np.square(im1.astype(np.float)-im2.astype(np.float))
+  diff = np.square(im1-im2)
   diff_sum=np.mean(diff)
-  #rmse=np.sqrt(diff_sum)
+  rmse=np.sqrt(diff_sum)
   return rmse    
 def imsave(image, path):
   return imageio.imwrite(path, image)

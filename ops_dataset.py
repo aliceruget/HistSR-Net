@@ -106,8 +106,7 @@ def create_hist(patch_depth_LR_norm , patch_intensity_norm, intensity_level):
     array_bin = np.zeros(len(array_exp))
     for i in range(len(array_exp)-precision+1):
         array_bin[i] = np.sum(array_exp[range(i , i+precision , 1)])
-    #max_a, min_a = np.max(array_bin), np.min(array_bin)
-    #array_bin = (array_bin - min_a)/(max_a - min_a)
+
 
     # Attribution of the values by picking in array_bin
     nb_patches = len(patch_depth_LR_norm)

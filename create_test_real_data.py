@@ -14,11 +14,15 @@ from ops_dataset import center_of_mass
 import numpy as np
 import skimage.measure
 
+
+
+data_type = 'Hammer_data'
+#data_type = 'Juggling_data'
 # ---------------------------------------------------------------------------------
 ### 1. Clean Histograms from last and first row 
 # ---------------------------------------------------------------------------------
 print('Clean_Histogram...')
-data_dir = '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/Raw_histogram'
+data_dir = '/Users/aliceruget/Documents/PhD/Dataset/' + data_type + '/Data/Raw_histogram'
 list_hist =glob.glob(os.path.join(data_dir,'*_hist.mat'))
 print(len(list_hist))
 for idx in range(len(list_hist)):
@@ -29,7 +33,7 @@ for idx in range(len(list_hist)):
     histo[30,:,:]   = histo[28,:,:]
     histo[31,:,:]   = histo[28,:,:]
     image = center_of_mass(histo, 'one_image')
-    sio.savemat('/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/Clean_histograms/'+str(idx)+'_hist.mat', {'histogram' : histo})
+    sio.savemat('/Users/aliceruget/Documents/PhD/Dataset/'+data_type+'/Data/Clean_histograms/'+str(idx)+'_hist.mat', {'histogram' : histo})
     #sio.savemat('/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/Depth/'+str(idx)+'_depth.mat', {'depth' : image})
 
 # ---------------------------------------------------------------------------------
@@ -63,8 +67,8 @@ calibration_pool4 = np.reshape(calibration_pool4, (1,8,16,1))
 # ---------------------------------------------------------------------------------
 print('Compute Depth and Features...')
 
-data_dir =  '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/Clean_histograms'
-list_hist = glob.glob(os.path.join(data_dir,'0_hist.mat'))
+data_dir =  '/Users/aliceruget/Documents/PhD/Dataset/' + data_type + '/Data/Clean_histograms'
+list_hist = glob.glob(os.path.join(data_dir,'*_hist.mat'))
 
 
 for idx in range(0,len(list_hist)):
@@ -143,7 +147,7 @@ for idx in range(0,len(list_hist)):
 # ---------------------------------------------------------------------------------
 print('Save ...')
 
-save_path = '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/small_Data_TEST'
+save_path = '/Users/aliceruget/Documents/PhD/Dataset/' + data_type +'/Data/small_Data_TEST'
 for idx in range(0,len(list_hist)):
     if not os.path.exists(save_path):
         os.makedirs(save_path)

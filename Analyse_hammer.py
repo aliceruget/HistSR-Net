@@ -13,12 +13,13 @@ import cv2
 from ops_dataset import center_of_mass
 import numpy as np
 import skimage.measure
-
-#save_path = '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/SBR_function_ppp'
+plt.clf()
+plt.cla()
+# save_path = '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/SBR_function_ppp'
 
 
 # data_dir = '/Users/aliceruget/Documents/PhD/Dataset/Hammer_data/Data/Clean_histograms'
-# list_hist =glob.glob(os.path.join(data_dir,'hist.mat'))
+# list_hist =glob.glob(os.path.join(data_dir,'*_hist.mat'))
 # histogram = sio.loadmat(list_hist[0])['histogram']
 
 
@@ -27,10 +28,11 @@ data_dir = '/Users/aliceruget/Documents/PhD/HistSR_Net_AR/Dataset/create_testing
 save_path = data_dir
 list_hist =glob.glob(os.path.join(data_dir,'hist_after.mat'))
 histogram = sio.loadmat(list_hist[0])['hist_after']
+
 Nb_histogram = len(list_hist)
 
 print('Nb_histogram '+ str(Nb_histogram))
-Nx = histogram.shape[0]
+Nx = histogram.shape[0] 
 Ny = histogram.shape[1]
 Nbins = histogram.shape[2]
 
@@ -55,8 +57,8 @@ for idx in range(Nb_histogram):
                 
                 # SBR 
                 b = np.median(hist_one_pixel)
-                background = b*Nbins
-                if background == 0 :
+                
+                if b == 0 :
                     #print('Background is zero for idx='+ str(idx)+', i='+str(i)+', j='+str(j))
                     number_background_zeros = number_background_zeros + 1
                     #print(idx)
@@ -71,9 +73,9 @@ for idx in range(Nb_histogram):
 
                     pos_max = np.argmax(hist_one_pixel)
                     range_center_of_mass = range(max(pos_max-1, 0), min(pos_max+2,Nbins))
-
+                    
                     hist_one_pixel_no_noise = hist_one_pixel - b*np.ones(Nbins)
-                
+                    background = b * len(range_center_of_mass)
                     signal =np.sum(hist_one_pixel_no_noise[range_center_of_mass])
 
                     SBR = signal/background
